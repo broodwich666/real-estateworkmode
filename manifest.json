@@ -1,0 +1,8 @@
+{
+  "name": "Zad's REFLASHAPP Work Mode",
+  "short_name": "Work Mode",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#07101d",
+  "theme_color": "#07101d"
+}
