@@ -1,45 +1,24 @@
-# Rental Match CRM
+# Zad's REFLASHAPP Work Mode v2
 
-A small NYC rental CRM for agents: keep clients and listings in one database, cross-search by criteria, and save the best matches.
+Upload the contents of this folder to the root of the existing `real-estateworkmode` repository.
 
-Inventory comes from **manual entry**, **CSV import**, or a **future licensed MLS Grid feed**. This app does not scrape OneKey, Craigslist, StreetEasy, Zillow, Google Maps, or any other listing site.
+New:
+- Brain combines the chapter library, raw course notes, and flashcard index.
+- Vault stores photos, PDFs, documents, audio, video, and other files locally on the device.
+- Rentals, Sales, Clients, Properties, Tasks, and Showing Checklists remain included.
 
-## Run locally (one command)
+Vault files are not uploaded to GitHub. Clearing browser website data can remove local Vault files.
+
+## Apps in this repo
+
+**Work Mode (repo root / GitHub Pages)**  
+The existing static PWA stays at the root: `index.html`, `app.js`, `data.js`, `styles.css`, `sw.js`, `manifest.json`. GitHub Pages behavior is unchanged.
+
+**Rental Match CRM (`crm/`)**  
+An additive Next.js + SQLite app for matching rental clients to listings. It does not replace Work Mode.
 
 ```bash
-npm install && npm run dev
+cd crm && npm install && npm run dev
 ```
 
-Then open [http://localhost:3000](http://localhost:3000).
-
-The first launch creates `data/crm.db` (SQLite) and seeds sample clients and listings. To reset demo data:
-
-```bash
-npm run seed
-```
-
-## Demo flow
-
-1. Open **Clients** and pick **Maya Chen** (or add a new client).
-2. The client page runs **Find matches** against available listings: budget, beds, baths, neighborhoods, and pets are hard filters; must-haves affect ranking.
-3. Save a match with optional notes.
-4. On **Listings**, add a unit by hand or **Import CSV**. A sample file is at `data/sample-listings.csv`.
-
-## Data model
-
-- **clients**: name, phone, email, budget_max, beds_min, baths_min, neighborhoods, pets, move_in_date, must_haves, notes
-- **listings**: source, external_id, address, neighborhood, beds, baths, price, status, url, pets_allowed, amenities, notes, pulled_at
-- **matches**: client_id, listing_id, notes, created_at
-
-CSV columns match the listing fields. Rows with the same `source` + `external_id` update the existing listing. `pets_allowed` accepts `yes` / `true` / `1`. Amenities can be comma-separated (quoted) or semicolon-separated.
-
-## Scripts
-
-| Command | What it does |
-| --- | --- |
-| `npm install && npm run dev` | Install and run the app |
-| `npm test` | Matching + CSV unit tests |
-| `npm run seed` | Recreate the SQLite database from sample data |
-| `npm run build && npm start` | Production server |
-
-No API keys or secrets are required. Do not commit `.env` files with credentials.
+Then open [http://localhost:3000](http://localhost:3000). CRM details are in `crm/README.md`. CRM inventory comes from manual entry, CSV, or a future licensed MLS Grid feed — not scraping.
