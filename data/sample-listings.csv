@@ -1,0 +1,4 @@
+source,external_id,address,neighborhood,beds,baths,price,status,url,pets_allowed,amenities,notes,pulled_at
+csv,CSV-PS-77,"77 7th Avenue #3, Brooklyn, NY",Park Slope,2,1,4950,available,,yes,"laundry in unit, dishwasher, outdoor space",CSV demo listing near the park,2026-09-18
+csv,CSV-AS-19,"19-19 24th Avenue #5A, Queens, NY",Astoria,0,1,2400,available,,no,"doorman, elevator",CSV demo alcove studio,2026-09-18
+csv,CSV-WB-12,"12 Kent Avenue #6, Brooklyn, NY",Williamsburg,1,1,3150,available,,yes,"dishwasher, laundry in building",CSV demo 1BR for Maya-style searches,2026-09-18
