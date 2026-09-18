@@ -8,3 +8,10 @@ New:
 - Rentals, Sales, Clients, Properties, Tasks, and Showing Checklists remain included.
 
 Vault files are not uploaded to GitHub. Clearing browser website data can remove local Vault files.
+
+---
+
+Other apps in this repository stay separate from Work Mode:
+
+- `portal/` — multi-project data hub (`cd portal && npm install && npm run dev`)
+- `crm/` — Real Estate Match CRM, when present; not part of the portal
