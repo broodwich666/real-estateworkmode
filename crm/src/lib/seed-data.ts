@@ -5,7 +5,7 @@ export const seedSources: SourceInput[] = [
     name: "NYC PLUTO",
     kind: "open",
     status: "ready",
-    notes: "Tax-lot backbone, dataset 64uk-42ks. Field map only this pass — no live API pull.",
+    notes: "Tax-lot backbone, dataset 64uk-42ks. Enrich from NYC Open Data SODA; never a listing scrape.",
   },
   {
     name: "NYC ACRIS / DOF rolling sales",
@@ -365,6 +365,8 @@ export const seedListings: ListingInput[] = [
     amenities: ["elevator", "doorman", "dishwasher"],
     notes: "Doorman building near the park.",
     pulled_at: "2026-09-07",
+    borough: "Manhattan",
+    bbl: "1012437505",
   },
   {
     source: "manual",
@@ -425,6 +427,8 @@ export const seedListings: ListingInput[] = [
     amenities: ["doorman", "gym", "laundry in unit", "outdoor space"],
     notes: "High floor with terrace.",
     pulled_at: "2026-09-03",
+    borough: "Brooklyn",
+    bbl: "3001457502",
   },
   {
     source: "manual",

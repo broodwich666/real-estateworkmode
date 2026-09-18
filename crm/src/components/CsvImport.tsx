@@ -27,8 +27,8 @@ export default function CsvImport() {
       </div>
       <p className="text-sm text-ink/60">
         Columns: source, external_id, address, neighborhood, beds, baths, price, status, url,
-        pets_allowed, amenities, notes, pulled_at. Duplicate source + external_id rows update the existing
-        listing.
+        pets_allowed, amenities, notes, pulled_at, plus optional borough and bbl. Duplicate source +
+        external_id rows update the existing listing. Omitted borough/bbl columns do not clear stored lot keys.
       </p>
       <button className="btn-accent w-full" disabled={pending}>
         {pending ? "Importing…" : "Import listings"}

@@ -4,6 +4,7 @@ import Database from "better-sqlite3";
 import { seedBrokers, seedClients, seedListings, seedSources } from "./seed-data";
 import { parseBool, parseNumber, parseOptionalNumber, splitList } from "./format";
 import type { Client, ClientInput, Listing, ListingInput, Match, PersonType, Source } from "./types";
+import { normalizeBbl, type PlutoLot } from "./pluto";
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS clients (
@@ -49,6 +50,17 @@ CREATE TABLE IF NOT EXISTS listings (
   amenities TEXT NOT NULL DEFAULT '[]',
   notes TEXT NOT NULL DEFAULT '',
   pulled_at TEXT NOT NULL DEFAULT '',
+  borough TEXT,
+  bbl TEXT,
+  units_res INTEGER,
+  year_built INTEGER,
+  num_floors REAL,
+  bldg_class TEXT,
+  zone_dist TEXT,
+  latitude REAL,
+  longitude REAL,
+  owner_name TEXT,
+  pluto_enriched_at TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -158,6 +170,24 @@ function migrate(db: SqliteDb) {
   if (!clientCols.has("type")) db.exec("ALTER TABLE clients ADD COLUMN type TEXT NOT NULL DEFAULT 'client'");
   if (!clientCols.has("status")) db.exec("ALTER TABLE clients ADD COLUMN status TEXT NOT NULL DEFAULT 'active'");
   if (!clientCols.has("company")) db.exec("ALTER TABLE clients ADD COLUMN company TEXT NOT NULL DEFAULT ''");
+
+  const listingCols = tableColumns(db, "listings");
+  const listingAdds: Array<[string, string]> = [
+    ["borough", "TEXT"],
+    ["bbl", "TEXT"],
+    ["units_res", "INTEGER"],
+    ["year_built", "INTEGER"],
+    ["num_floors", "REAL"],
+    ["bldg_class", "TEXT"],
+    ["zone_dist", "TEXT"],
+    ["latitude", "REAL"],
+    ["longitude", "REAL"],
+    ["owner_name", "TEXT"],
+    ["pluto_enriched_at", "TEXT"],
+  ];
+  for (const [name, spec] of listingAdds) {
+    if (!listingCols.has(name)) db.exec(`ALTER TABLE listings ADD COLUMN ${name} ${spec}`);
+  }
 }
 
 function mapListing(row: Record<string, unknown>): Listing {
@@ -176,6 +206,17 @@ function mapListing(row: Record<string, unknown>): Listing {
     amenities: readList(String(row.amenities ?? "")),
     notes: String(row.notes ?? ""),
     pulled_at: String(row.pulled_at ?? ""),
+    borough: String(row.borough ?? ""),
+    bbl: String(row.bbl ?? ""),
+    units_res: row.units_res == null ? null : Number(row.units_res),
+    year_built: row.year_built == null ? null : Number(row.year_built),
+    num_floors: row.num_floors == null ? null : Number(row.num_floors),
+    bldg_class: String(row.bldg_class ?? ""),
+    zone_dist: String(row.zone_dist ?? ""),
+    latitude: row.latitude == null ? null : Number(row.latitude),
+    longitude: row.longitude == null ? null : Number(row.longitude),
+    owner_name: String(row.owner_name ?? ""),
+    pluto_enriched_at: String(row.pluto_enriched_at ?? ""),
     created_at: String(row.created_at ?? ""),
     updated_at: String(row.updated_at ?? ""),
   };
@@ -216,34 +257,45 @@ function seed(db: SqliteDb) {
 
   const rentalCount = (db.prepare("SELECT COUNT(*) AS n FROM clients WHERE type = 'client'").get() as { n: number }).n;
   const listingCount = (db.prepare("SELECT COUNT(*) AS n FROM listings").get() as { n: number }).n;
-  if (rentalCount > 0 || listingCount > 0) return;
+  if (rentalCount === 0 && listingCount === 0) {
+    const insertListing = db.prepare(`
+      INSERT INTO listings (source, external_id, address, neighborhood, beds, baths, price, status, url, pets_allowed, amenities, notes, pulled_at, borough, bbl)
+      VALUES (@source, @external_id, @address, @neighborhood, @beds, @baths, @price, @status, @url, @pets_allowed, @amenities, @notes, @pulled_at, @borough, @bbl)
+    `);
 
-  const insertListing = db.prepare(`
-    INSERT INTO listings (source, external_id, address, neighborhood, beds, baths, price, status, url, pets_allowed, amenities, notes, pulled_at)
-    VALUES (@source, @external_id, @address, @neighborhood, @beds, @baths, @price, @status, @url, @pets_allowed, @amenities, @notes, @pulled_at)
-  `);
+    const tx = db.transaction(() => {
+      for (const client of seedClients) insertClient.run(clientWriteParams({ ...client, type: "client" }));
+      for (const listing of seedListings) {
+        insertListing.run({
+          source: listing.source ?? "manual",
+          external_id: listing.external_id ?? "",
+          address: listing.address,
+          neighborhood: listing.neighborhood ?? "",
+          beds: listing.beds ?? 0,
+          baths: listing.baths ?? 0,
+          price: listing.price ?? null,
+          status: listing.status ?? "available",
+          url: listing.url ?? "",
+          pets_allowed: parseBool(listing.pets_allowed) ? 1 : 0,
+          amenities: jsonList(listing.amenities),
+          notes: listing.notes ?? "",
+          pulled_at: listing.pulled_at ?? "",
+          borough: listing.borough ?? "",
+          bbl: (listing.bbl || "").replace(/\D/g, "").slice(0, 10),
+        });
+      }
+    });
+    tx();
+  }
 
-  const tx = db.transaction(() => {
-    for (const client of seedClients) insertClient.run(clientWriteParams({ ...client, type: "client" }));
-    for (const listing of seedListings) {
-      insertListing.run({
-        source: listing.source ?? "manual",
-        external_id: listing.external_id ?? "",
-        address: listing.address,
-        neighborhood: listing.neighborhood ?? "",
-        beds: listing.beds ?? 0,
-        baths: listing.baths ?? 0,
-        price: listing.price ?? null,
-        status: listing.status ?? "available",
-        url: listing.url ?? "",
-        pets_allowed: parseBool(listing.pets_allowed) ? 1 : 0,
-        amenities: jsonList(listing.amenities),
-        notes: listing.notes ?? "",
-        pulled_at: listing.pulled_at ?? "",
-      });
-    }
-  });
-  tx();
+  db.prepare(
+    `UPDATE listings SET borough = 'Manhattan', bbl = '1012437505'
+     WHERE external_id = 'UWS-720-5D' AND (bbl IS NULL OR bbl = '')`
+  ).run();
+  db.prepare(
+    `UPDATE listings SET borough = 'Brooklyn', bbl = '3001457502'
+     WHERE external_id = 'DB-100-18K' AND (bbl IS NULL OR bbl = '')`
+  ).run();
 }
 
 export function getDb(): SqliteDb {
@@ -345,7 +397,7 @@ export function listListings(query = "", status = ""): Listing[] {
   const params: Record<string, string> = {};
   if (query) {
     clauses.push(
-      "(address LIKE @q OR neighborhood LIKE @q OR source LIKE @q OR external_id LIKE @q OR notes LIKE @q OR amenities LIKE @q)"
+      "(address LIKE @q OR neighborhood LIKE @q OR source LIKE @q OR external_id LIKE @q OR notes LIKE @q OR amenities LIKE @q OR bbl LIKE @q OR borough LIKE @q OR owner_name LIKE @q)"
     );
     params.q = `%${query}%`;
   }
@@ -365,7 +417,7 @@ export function getListing(id: number): Listing | null {
   return row ? mapListing(row) : null;
 }
 
-function listingWriteParams(input: ListingInput) {
+function listingWriteParams(input: ListingInput, existing?: Listing | null) {
   return {
     source: (input.source || "manual").trim() || "manual",
     external_id: (input.external_id || "").trim(),
@@ -380,6 +432,8 @@ function listingWriteParams(input: ListingInput) {
     amenities: jsonList(input.amenities),
     notes: input.notes ?? "",
     pulled_at: input.pulled_at || new Date().toISOString().slice(0, 10),
+    borough: input.borough !== undefined ? input.borough.trim() : (existing?.borough ?? ""),
+    bbl: input.bbl !== undefined ? normalizeBbl(input.bbl) : (existing?.bbl ?? ""),
   };
 }
 
@@ -395,14 +449,15 @@ export function createListing(input: ListingInput): Listing {
   }
   const result = getDb()
     .prepare(
-      `INSERT INTO listings (source, external_id, address, neighborhood, beds, baths, price, status, url, pets_allowed, amenities, notes, pulled_at)
-       VALUES (@source, @external_id, @address, @neighborhood, @beds, @baths, @price, @status, @url, @pets_allowed, @amenities, @notes, @pulled_at)`
+      `INSERT INTO listings (source, external_id, address, neighborhood, beds, baths, price, status, url, pets_allowed, amenities, notes, pulled_at, borough, bbl)
+       VALUES (@source, @external_id, @address, @neighborhood, @beds, @baths, @price, @status, @url, @pets_allowed, @amenities, @notes, @pulled_at, @borough, @bbl)`
     )
     .run(params);
   return getListing(Number(result.lastInsertRowid))!;
 }
 
 export function updateListing(id: number, input: ListingInput): Listing | null {
+  const existing = getListing(id);
   getDb()
     .prepare(
       `UPDATE listings SET
@@ -419,15 +474,51 @@ export function updateListing(id: number, input: ListingInput): Listing | null {
         amenities = @amenities,
         notes = @notes,
         pulled_at = @pulled_at,
+        borough = @borough,
+        bbl = @bbl,
         updated_at = datetime('now')
       WHERE id = @id`
     )
-    .run({ id, ...listingWriteParams(input) });
+    .run({ id, ...listingWriteParams(input, existing) });
   return getListing(id);
 }
 
 export function deleteListing(id: number) {
   getDb().prepare("DELETE FROM listings WHERE id = ?").run(id);
+}
+
+export function applyPlutoEnrich(id: number, lot: PlutoLot): Listing | null {
+  getDb()
+    .prepare(
+      `UPDATE listings SET
+        bbl = @bbl,
+        borough = CASE WHEN @borough = '' THEN borough ELSE @borough END,
+        units_res = @units_res,
+        year_built = @year_built,
+        num_floors = @num_floors,
+        bldg_class = @bldg_class,
+        zone_dist = @zone_dist,
+        latitude = @latitude,
+        longitude = @longitude,
+        owner_name = @owner_name,
+        pluto_enriched_at = datetime('now'),
+        updated_at = datetime('now')
+      WHERE id = @id`
+    )
+    .run({
+      id,
+      bbl: lot.bbl,
+      borough: lot.borough,
+      units_res: lot.units_res,
+      year_built: lot.year_built,
+      num_floors: lot.num_floors,
+      bldg_class: lot.bldg_class,
+      zone_dist: lot.zone_dist,
+      latitude: lot.latitude,
+      longitude: lot.longitude,
+      owner_name: lot.owner_name,
+    });
+  return getListing(id);
 }
 
 export function importListings(rows: ListingInput[]): { created: number; updated: number } {

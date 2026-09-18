@@ -68,6 +68,11 @@ export function trimNumber(value: number): string {
   return Number.isInteger(value) ? String(value) : String(value);
 }
 
+export function dash(value: string | number | null | undefined): string {
+  if (value === null || value === undefined || value === "") return "—";
+  return typeof value === "number" ? trimNumber(value) : String(value);
+}
+
 export function titleCaseStatus(status: string): string {
   return status
     .split(/[-_\s]+/)

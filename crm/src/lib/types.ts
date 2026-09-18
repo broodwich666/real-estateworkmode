@@ -35,6 +35,17 @@ export type Listing = {
   amenities: string[];
   notes: string;
   pulled_at: string;
+  borough: string;
+  bbl: string;
+  units_res: number | null;
+  year_built: number | null;
+  num_floors: number | null;
+  bldg_class: string;
+  zone_dist: string;
+  latitude: number | null;
+  longitude: number | null;
+  owner_name: string;
+  pluto_enriched_at: string;
   created_at: string;
   updated_at: string;
 };
@@ -103,4 +114,6 @@ export type ListingInput = {
   amenities?: string[] | string;
   notes?: string;
   pulled_at?: string;
+  borough?: string;
+  bbl?: string;
 };

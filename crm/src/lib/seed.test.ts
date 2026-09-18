@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { seedBrokers, seedSources } from "./seed-data";
+import { seedBrokers, seedListings, seedSources } from "./seed-data";
 
 test("seeds six inventory sources with scrape sources marked never", () => {
   assert.equal(seedSources.length, 6);
@@ -22,4 +22,18 @@ test("seeds ten active brokers and leaves Michele Denby email blank", () => {
   assert.equal(denby?.email, "");
   assert.equal(denby?.company, "Elliman FiDi");
   assert.ok(seedBrokers.filter((broker) => broker.notes?.startsWith("http")).length >= 9);
+});
+
+test("seeds the West End listing with BBL 1012437505 for PLUTO enrich", () => {
+  const westEnd = seedListings.find((listing) => listing.external_id === "UWS-720-5D");
+  assert.ok(westEnd);
+  assert.equal(westEnd?.bbl, "1012437505");
+  assert.equal(westEnd?.borough, "Manhattan");
+  assert.match(westEnd?.address || "", /720 West End Avenue/i);
+});
+
+test("seeds Downtown Brooklyn Willoughby with BBL 3001457502", () => {
+  const lot = seedListings.find((listing) => listing.external_id === "DB-100-18K");
+  assert.equal(lot?.bbl, "3001457502");
+  assert.equal(lot?.borough, "Brooklyn");
 });

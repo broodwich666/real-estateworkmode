@@ -4,11 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { parseListingsCsv } from "@/lib/csv";
 import {
+  applyPlutoEnrich,
   createClient,
   createListing,
   deleteClient,
   deleteListing,
   deleteMatch,
+  getListing,
   importListings,
   saveMatch,
   updateClient,
@@ -16,6 +18,8 @@ import {
   updateMatchNotes,
 } from "@/lib/db";
 import { parseBool, parseNumber, parseOptionalNumber, splitList } from "@/lib/format";
+import { fetchPlutoLot } from "@/lib/pluto";
+import type { Listing } from "@/lib/types";
 
 function text(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "").trim();
@@ -63,7 +67,20 @@ function listingFromForm(formData: FormData) {
     ),
     notes: text(formData, "notes"),
     pulled_at: text(formData, "pulled_at"),
+    borough: text(formData, "borough"),
+    bbl: text(formData, "bbl"),
   };
+}
+
+async function autoEnrichIfBbl(listing: Listing) {
+  if (!listing.bbl) return;
+  const result = await fetchPlutoLot({
+    bbl: listing.bbl,
+    address: listing.address,
+    borough: listing.borough,
+    neighborhood: listing.neighborhood,
+  });
+  if (result.ok) applyPlutoEnrich(listing.id, result.lot);
 }
 
 export async function createClientAction(formData: FormData) {
@@ -92,6 +109,7 @@ export async function deleteClientAction(formData: FormData) {
 
 export async function createListingAction(formData: FormData) {
   const listing = createListing(listingFromForm(formData));
+  await autoEnrichIfBbl(listing);
   revalidatePath("/");
   revalidatePath("/listings");
   redirect(`/listings/${listing.id}`);
@@ -99,11 +117,34 @@ export async function createListingAction(formData: FormData) {
 
 export async function updateListingAction(formData: FormData) {
   const id = Number(formData.get("id"));
-  updateListing(id, listingFromForm(formData));
+  const listing = updateListing(id, listingFromForm(formData));
+  if (listing) await autoEnrichIfBbl(listing);
   revalidatePath("/");
   revalidatePath("/listings");
   revalidatePath(`/listings/${id}`);
   redirect(`/listings/${id}`);
+}
+
+export async function enrichListingAction(
+  formData: FormData
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const id = Number(formData.get("id"));
+  const listing = getListing(id);
+  if (!listing) return { ok: false, error: "Listing not found." };
+
+  const result = await fetchPlutoLot({
+    bbl: listing.bbl,
+    address: listing.address,
+    borough: listing.borough,
+    neighborhood: listing.neighborhood,
+  });
+  if (!result.ok) return result;
+
+  applyPlutoEnrich(id, result.lot);
+  revalidatePath("/");
+  revalidatePath("/listings");
+  revalidatePath(`/listings/${id}`);
+  return { ok: true };
 }
 
 export async function deleteListingAction(formData: FormData) {

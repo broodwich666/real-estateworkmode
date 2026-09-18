@@ -16,6 +16,8 @@ export const CSV_COLUMNS = [
   "amenities",
   "notes",
   "pulled_at",
+  "borough",
+  "bbl",
 ] as const;
 
 export type CsvImportResult = {
@@ -66,6 +68,10 @@ export function parseListingsCsv(text: string): CsvImportResult {
       amenities: splitList(firstValue(row, ["amenities", "features"])),
       notes: firstValue(row, ["notes", "comments"]),
       pulled_at: firstValue(row, ["pulled_at", "listed_at", "updated_at"]),
+      ...(firstValue(row, ["borough", "boro"])
+        ? { borough: firstValue(row, ["borough", "boro"]) }
+        : {}),
+      ...(firstValue(row, ["bbl"]) ? { bbl: firstValue(row, ["bbl"]) } : {}),
     });
   });
 

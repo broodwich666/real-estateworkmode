@@ -35,17 +35,18 @@ npm run seed
 3. The client page runs **Find matches** against available listings: budget, beds, baths, neighborhoods, and pets are hard filters; must-haves affect ranking.
 4. Save a match with optional notes.
 5. On **Listings**, add a unit by hand or **Import CSV**. A sample file is at `data/sample-listings.csv`.
+6. Open **720 West End Avenue #5D** (seed id `UWS-720-5D`, BBL `1012437505`) and click **Enrich from PLUTO**. Lot fields fill from NYC Open Data; rent/beds/status stay put. A listing with no matching lot shows a soft error.
 
-PLUTO field map (no live pull): `docs/PLUTO-FIELD-MAP.md`.
+PLUTO field map + live SODA join: `docs/PLUTO-FIELD-MAP.md`.
 
 ## Data model
 
 - **clients / people**: name, type (`client` or `broker`), status, company, phone, email, budget_max, beds_min, baths_min, neighborhoods, pets, move_in_date, must_haves, notes
-- **listings**: source, external_id, address, neighborhood, beds, baths, price, status, url, pets_allowed, amenities, notes, pulled_at
+- **listings**: source, external_id, address, neighborhood, beds, baths, price, status, url, pets_allowed, amenities, notes, pulled_at, plus optional PLUTO lot columns (`borough`, `bbl`, `units_res`, `year_built`, `num_floors`, `bldg_class`, `zone_dist`, `latitude`, `longitude`, `owner_name`, `pluto_enriched_at`)
 - **matches**: client_id, listing_id, notes, created_at
 - **sources**: name, kind (`open` / `licensed` / `manual` / `blocked`), status (`ready` / `blocked` / `never`), notes
 
-CSV columns match the listing fields. Rows with the same `source` + `external_id` update the existing listing. `pets_allowed` accepts `yes` / `true` / `1`. Amenities can be comma-separated (quoted) or semicolon-separated.
+CSV columns match the listing fields. Optional `borough` and `bbl` are lookup keys for PLUTO enrich. Rows with the same `source` + `external_id` update the existing listing. `pets_allowed` accepts `yes` / `true` / `1`. Amenities can be comma-separated (quoted) or semicolon-separated.
 
 This CRM does not send outreach or email. Broker emails are stored for reference only.
 
@@ -54,7 +55,7 @@ This CRM does not send outreach or email. Broker emails are stored for reference
 | Command | What it does |
 | --- | --- |
 | `npm install && npm run dev` | Install and run the app (from `crm/`) |
-| `npm test` | Matching + CSV unit tests |
+| `npm test` | Matching, CSV, PLUTO, and SQLite migrate/enrich tests |
 | `npm run seed` | Recreate the SQLite database from sample data |
 | `npm run build && npm start` | Production server |
 

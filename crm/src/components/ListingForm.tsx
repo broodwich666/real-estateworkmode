@@ -1,4 +1,4 @@
-import { LISTING_SOURCES, LISTING_STATUSES, MUST_HAVES, NEIGHBORHOODS } from "@/lib/constants";
+import { BOROUGHS, LISTING_SOURCES, LISTING_STATUSES, MUST_HAVES, NEIGHBORHOODS } from "@/lib/constants";
 import type { Listing } from "@/lib/types";
 
 export default function ListingForm({
@@ -50,6 +50,49 @@ export default function ListingForm({
               <option key={name} value={name} />
             ))}
           </datalist>
+        </div>
+        <div>
+          <label className="label" htmlFor="borough">
+            Borough
+          </label>
+          <input
+            id="borough"
+            name="borough"
+            className="field"
+            list="boroughs"
+            defaultValue={listing?.borough}
+            placeholder="Manhattan or MN"
+          />
+          <datalist id="boroughs">
+            {BOROUGHS.map((boro) => (
+              <option key={boro.code} value={boro.name}>
+                {boro.abbr}={boro.code}
+              </option>
+            ))}
+            {BOROUGHS.map((boro) => (
+              <option key={`${boro.abbr}-abbr`} value={boro.abbr} />
+            ))}
+          </datalist>
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className="label" htmlFor="bbl">
+            BBL
+          </label>
+          <input
+            id="bbl"
+            name="bbl"
+            className="field"
+            inputMode="numeric"
+            maxLength={14}
+            defaultValue={listing?.bbl}
+            placeholder="1012437505"
+          />
+          <p className="mt-1 text-xs text-ink/55">
+            10-digit tax lot. If present, save auto-enriches from PLUTO. Lot fields stay off this form.
+          </p>
         </div>
         <div>
           <label className="label" htmlFor="status">

@@ -31,3 +31,17 @@ ALT-9,90 Main Street,Astoria,0,1,2500,true,doorman;elevator`;
   assert.equal(result.rows[0].pets_allowed, true);
   assert.deepEqual(result.rows[0].amenities, ["doorman", "elevator"]);
 });
+
+test("parses optional borough and bbl without requiring them", () => {
+  const withLot = parseListingsCsv(
+    `address,borough,bbl,beds,price
+"720 West End Avenue #5D, New York, NY",Manhattan,1012437505,2,4400`
+  );
+  assert.equal(withLot.rows[0].borough, "Manhattan");
+  assert.equal(withLot.rows[0].bbl, "1012437505");
+
+  const withoutLot = parseListingsCsv(`address,beds,price
+"184 N 8th Street #3L, Brooklyn, NY",1,3200`);
+  assert.equal(withoutLot.rows[0].borough, undefined);
+  assert.equal(withoutLot.rows[0].bbl, undefined);
+});
