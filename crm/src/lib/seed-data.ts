@@ -1,4 +1,136 @@
-import type { ClientInput, ListingInput } from "./types";
+import type { ClientInput, ListingInput, SourceInput } from "./types";
+
+export const seedSources: SourceInput[] = [
+  {
+    name: "NYC PLUTO",
+    kind: "open",
+    status: "ready",
+    notes: "Tax-lot backbone, dataset 64uk-42ks. Field map only this pass — no live API pull.",
+  },
+  {
+    name: "NYC ACRIS / DOF rolling sales",
+    kind: "open",
+    status: "ready",
+    notes: "Comps, not live listings.",
+  },
+  {
+    name: "OneKey MLS Grid",
+    kind: "licensed",
+    status: "blocked",
+    notes: "Needs broker sponsor + RESO token.",
+  },
+  {
+    name: "REBNY RLS",
+    kind: "licensed",
+    status: "blocked",
+    notes: "Member firm feed.",
+  },
+  {
+    name: "Manual paste / CSV",
+    kind: "manual",
+    status: "ready",
+    notes: "Matrix export, FB/CL posts copied in.",
+  },
+  {
+    name: "StreetEasy / Zillow / Craigslist / Maps",
+    kind: "blocked",
+    status: "never",
+    notes: "No scrape.",
+  },
+];
+
+export const seedBrokers: ClientInput[] = [
+  {
+    name: "David Schwartz",
+    type: "broker",
+    status: "active",
+    company: "Compass",
+    phone: "516-369-5464",
+    email: "davidschwartz@compass.com",
+    notes: "https://www.compass.com/agents/david-schwartz/",
+  },
+  {
+    name: "Denise Bongiovanni",
+    type: "broker",
+    status: "active",
+    company: "Compass",
+    phone: "917-617-1867",
+    email: "denise.bongiovanni@compass.com",
+    notes: "https://www.compass.com/agents/denise-bongiovanni/",
+  },
+  {
+    name: "Jane Wheatley",
+    type: "broker",
+    status: "active",
+    company: "Corcoran",
+    phone: "917-509-2025",
+    email: "jane.wheatley@corcoran.com",
+    notes: "https://www.corcoran.com/real-estate-agents/detail/agent/jane-wheatley/8043",
+  },
+  {
+    name: "Ryan Lee",
+    type: "broker",
+    status: "active",
+    company: "Corcoran SoHo",
+    phone: "650-520-0770",
+    email: "ryan.lee@corcoran.com",
+    notes: "https://www.corcoran.com/real-estate-agents/detail/agent/ryan-lee/25196",
+  },
+  {
+    name: "Justin Tuinstra",
+    type: "broker",
+    status: "active",
+    company: "Elliman",
+    phone: "917-535-3113",
+    email: "jtuinstra@elliman.com",
+    notes: "https://jtsellsnyc.com/rent/",
+  },
+  {
+    name: "Honda Jayathilake",
+    type: "broker",
+    status: "active",
+    company: "Elliman",
+    phone: "646-639-0946",
+    email: "Honda.Jayathilake@elliman.com",
+    notes: "https://daniellelackorealestate.com/agents/honda-j",
+  },
+  {
+    name: "Todd Buchanan",
+    type: "broker",
+    status: "active",
+    company: "BHS",
+    phone: "917-370-4820",
+    email: "tbuchanan@bhsusa.com",
+    notes: "https://www.bhsusa.com/real-estate-agent/todd-buchanan",
+  },
+  {
+    name: "Colleen Breeckner",
+    type: "broker",
+    status: "active",
+    company: "Nest Seekers",
+    phone: "917-696-3571",
+    email: "ColleenB@nestseekers.com",
+    notes: "https://www.nestseekers.com/agent/colleen-breeckner/",
+  },
+  {
+    name: "Crystal Rodriguez",
+    type: "broker",
+    status: "active",
+    company: "Nest Seekers SoHo",
+    phone: "646-228-3414",
+    email: "CrystalR@nestseekers.com",
+    notes: "https://www.nestseekers.com/agent/crystal-rodriguez/",
+  },
+  {
+    name: "Michele Denby",
+    type: "broker",
+    status: "active",
+    company: "Elliman FiDi",
+    phone: "917-833-3310",
+    email: "",
+    notes: "",
+  },
+];
 
 export const seedClients: ClientInput[] = [
   {

@@ -5,8 +5,9 @@ import { usePathname } from "next/navigation";
 
 const tabs = [
   { href: "/", label: "Home", icon: "⌂" },
-  { href: "/clients", label: "Clients", icon: "◉" },
+  { href: "/clients", label: "People", icon: "◉" },
   { href: "/listings", label: "Listings", icon: "▣" },
+  { href: "/sources", label: "Sources", icon: "☰" },
 ];
 
 export default function Nav() {
@@ -19,7 +20,7 @@ export default function Nav() {
 
   return (
     <nav className="fixed bottom-0 left-1/2 z-20 w-full max-w-5xl -translate-x-1/2 border-t border-line bg-[rgba(243,239,230,0.96)] px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur">
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-4 gap-2">
         {tabs.map((tab) => (
           <Link
             key={tab.href}

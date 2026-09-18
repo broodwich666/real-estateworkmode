@@ -1,4 +1,4 @@
-import { MUST_HAVES, NEIGHBORHOODS } from "@/lib/constants";
+import { MUST_HAVES, NEIGHBORHOODS, PERSON_STATUSES, PERSON_TYPES } from "@/lib/constants";
 import type { Client } from "@/lib/types";
 
 export default function ClientForm({
@@ -24,7 +24,40 @@ export default function ClientForm({
         <label className="label" htmlFor="name">
           Name
         </label>
-        <input id="name" name="name" className="field" required defaultValue={client?.name} placeholder="Client name" />
+        <input id="name" name="name" className="field" required defaultValue={client?.name} placeholder="Name" />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div>
+          <label className="label" htmlFor="type">
+            Type
+          </label>
+          <select id="type" name="type" className="field" defaultValue={client?.type ?? "client"}>
+            {PERSON_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="label" htmlFor="status">
+            Status
+          </label>
+          <select id="status" name="status" className="field" defaultValue={client?.status ?? "active"}>
+            {PERSON_STATUSES.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="label" htmlFor="company">
+            Company
+          </label>
+          <input id="company" name="company" className="field" defaultValue={client?.company} placeholder="Optional" />
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -148,7 +181,13 @@ export default function ClientForm({
         <label className="label" htmlFor="notes">
           Notes
         </label>
-        <textarea id="notes" name="notes" className="field min-h-28" defaultValue={client?.notes} />
+        <textarea
+          id="notes"
+          name="notes"
+          className="field min-h-28"
+          defaultValue={client?.notes}
+          placeholder="For brokers, paste the source URL here."
+        />
       </div>
 
       <button className="btn-primary w-full">{submitLabel}</button>

@@ -26,6 +26,9 @@ function clientFromForm(formData: FormData) {
   if (!name) throw new Error("Name is required.");
   return {
     name,
+    type: text(formData, "type") || "client",
+    status: text(formData, "status") || "active",
+    company: text(formData, "company"),
     phone: text(formData, "phone"),
     email: text(formData, "email"),
     budget_max: parseOptionalNumber(text(formData, "budget_max")),

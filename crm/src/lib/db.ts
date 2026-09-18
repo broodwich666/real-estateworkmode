@@ -1,14 +1,17 @@
 import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
-import { seedClients, seedListings } from "./seed-data";
+import { seedBrokers, seedClients, seedListings, seedSources } from "./seed-data";
 import { parseBool, parseNumber, parseOptionalNumber, splitList } from "./format";
-import type { Client, ClientInput, Listing, ListingInput, Match } from "./types";
+import type { Client, ClientInput, Listing, ListingInput, Match, PersonType, Source } from "./types";
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS clients (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
+  type TEXT NOT NULL DEFAULT 'client',
+  status TEXT NOT NULL DEFAULT 'active',
+  company TEXT NOT NULL DEFAULT '',
   phone TEXT NOT NULL DEFAULT '',
   email TEXT NOT NULL DEFAULT '',
   budget_max INTEGER,
@@ -21,6 +24,14 @@ CREATE TABLE IF NOT EXISTS clients (
   notes TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS sources (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  kind TEXT NOT NULL,
+  status TEXT NOT NULL,
+  notes TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS listings (
@@ -82,9 +93,13 @@ function readList(value: string | null | undefined): string[] {
 }
 
 function mapClient(row: Record<string, unknown>): Client {
+  const type = String(row.type ?? "client") === "broker" ? "broker" : "client";
   return {
     id: Number(row.id),
     name: String(row.name ?? ""),
+    type,
+    status: String(row.status ?? "active") || "active",
+    company: String(row.company ?? ""),
     phone: String(row.phone ?? ""),
     email: String(row.email ?? ""),
     budget_max: row.budget_max == null ? null : Number(row.budget_max),
@@ -98,6 +113,51 @@ function mapClient(row: Record<string, unknown>): Client {
     created_at: String(row.created_at ?? ""),
     updated_at: String(row.updated_at ?? ""),
   };
+}
+
+function mapSource(row: Record<string, unknown>): Source {
+  return {
+    id: Number(row.id),
+    name: String(row.name ?? ""),
+    kind: String(row.kind ?? ""),
+    status: String(row.status ?? ""),
+    notes: String(row.notes ?? ""),
+  };
+}
+
+function personType(value: string | undefined): PersonType {
+  return value === "broker" ? "broker" : "client";
+}
+
+function clientWriteParams(input: ClientInput) {
+  return {
+    name: input.name.trim(),
+    type: personType(input.type),
+    status: (input.status || "active").trim() || "active",
+    company: (input.company || "").trim(),
+    phone: input.phone ?? "",
+    email: input.email ?? "",
+    budget_max: parseOptionalNumber(input.budget_max),
+    beds_min: parseNumber(input.beds_min, 0),
+    baths_min: parseNumber(input.baths_min, 0),
+    neighborhoods: jsonList(input.neighborhoods),
+    pets: parseBool(input.pets) ? 1 : 0,
+    move_in_date: input.move_in_date ?? "",
+    must_haves: jsonList(input.must_haves),
+    notes: input.notes ?? "",
+  };
+}
+
+function tableColumns(db: SqliteDb, table: string): Set<string> {
+  const rows = db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
+  return new Set(rows.map((row) => row.name));
+}
+
+function migrate(db: SqliteDb) {
+  const clientCols = tableColumns(db, "clients");
+  if (!clientCols.has("type")) db.exec("ALTER TABLE clients ADD COLUMN type TEXT NOT NULL DEFAULT 'client'");
+  if (!clientCols.has("status")) db.exec("ALTER TABLE clients ADD COLUMN status TEXT NOT NULL DEFAULT 'active'");
+  if (!clientCols.has("company")) db.exec("ALTER TABLE clients ADD COLUMN company TEXT NOT NULL DEFAULT ''");
 }
 
 function mapListing(row: Record<string, unknown>): Listing {
@@ -132,35 +192,39 @@ function mapMatch(row: Record<string, unknown>): Match {
 }
 
 function seed(db: SqliteDb) {
-  const clientCount = db.prepare("SELECT COUNT(*) AS n FROM clients").get() as { n: number };
-  const listingCount = db.prepare("SELECT COUNT(*) AS n FROM listings").get() as { n: number };
-  if (clientCount.n > 0 || listingCount.n > 0) return;
+  const insertSource = db.prepare(
+    `INSERT INTO sources (name, kind, status, notes)
+     VALUES (@name, @kind, @status, @notes)
+     ON CONFLICT(name) DO UPDATE SET kind = excluded.kind, status = excluded.status, notes = excluded.notes`
+  );
+  for (const source of seedSources) insertSource.run(source);
 
   const insertClient = db.prepare(`
-    INSERT INTO clients (name, phone, email, budget_max, beds_min, baths_min, neighborhoods, pets, move_in_date, must_haves, notes)
-    VALUES (@name, @phone, @email, @budget_max, @beds_min, @baths_min, @neighborhoods, @pets, @move_in_date, @must_haves, @notes)
+    INSERT INTO clients (name, type, status, company, phone, email, budget_max, beds_min, baths_min, neighborhoods, pets, move_in_date, must_haves, notes)
+    VALUES (@name, @type, @status, @company, @phone, @email, @budget_max, @beds_min, @baths_min, @neighborhoods, @pets, @move_in_date, @must_haves, @notes)
   `);
+
+  const existingBrokerNames = new Set(
+    (db.prepare("SELECT name FROM clients WHERE type = 'broker'").all() as Array<{ name: string }>).map((row) =>
+      row.name.toLowerCase()
+    )
+  );
+  for (const broker of seedBrokers) {
+    if (existingBrokerNames.has(broker.name.toLowerCase())) continue;
+    insertClient.run(clientWriteParams(broker));
+  }
+
+  const rentalCount = (db.prepare("SELECT COUNT(*) AS n FROM clients WHERE type = 'client'").get() as { n: number }).n;
+  const listingCount = (db.prepare("SELECT COUNT(*) AS n FROM listings").get() as { n: number }).n;
+  if (rentalCount > 0 || listingCount > 0) return;
+
   const insertListing = db.prepare(`
     INSERT INTO listings (source, external_id, address, neighborhood, beds, baths, price, status, url, pets_allowed, amenities, notes, pulled_at)
     VALUES (@source, @external_id, @address, @neighborhood, @beds, @baths, @price, @status, @url, @pets_allowed, @amenities, @notes, @pulled_at)
   `);
 
   const tx = db.transaction(() => {
-    for (const client of seedClients) {
-      insertClient.run({
-        name: client.name,
-        phone: client.phone ?? "",
-        email: client.email ?? "",
-        budget_max: client.budget_max ?? null,
-        beds_min: client.beds_min ?? 0,
-        baths_min: client.baths_min ?? 0,
-        neighborhoods: jsonList(client.neighborhoods),
-        pets: parseBool(client.pets) ? 1 : 0,
-        move_in_date: client.move_in_date ?? "",
-        must_haves: jsonList(client.must_haves),
-        notes: client.notes ?? "",
-      });
-    }
+    for (const client of seedClients) insertClient.run(clientWriteParams({ ...client, type: "client" }));
     for (const listing of seedListings) {
       insertListing.run({
         source: listing.source ?? "manual",
@@ -183,13 +247,19 @@ function seed(db: SqliteDb) {
 }
 
 export function getDb(): SqliteDb {
-  if (globalForDb.rentalCrmDb) return globalForDb.rentalCrmDb;
+  if (globalForDb.rentalCrmDb) {
+    globalForDb.rentalCrmDb.exec(SCHEMA);
+    migrate(globalForDb.rentalCrmDb);
+    seed(globalForDb.rentalCrmDb);
+    return globalForDb.rentalCrmDb;
+  }
   const file = dbPath();
   fs.mkdirSync(path.dirname(file), { recursive: true });
   const db = new Database(file);
   db.pragma("journal_mode = WAL");
   db.pragma("foreign_keys = ON");
   db.exec(SCHEMA);
+  migrate(db);
   seed(db);
   globalForDb.rentalCrmDb = db;
   return db;
@@ -208,17 +278,20 @@ export function resetDatabase() {
   return getDb();
 }
 
-export function listClients(query = ""): Client[] {
+export function listClients(query = "", type = ""): Client[] {
   const db = getDb();
-  const rows = query
-    ? db
-        .prepare(
-          `SELECT * FROM clients
-           WHERE name LIKE @q OR email LIKE @q OR phone LIKE @q OR neighborhoods LIKE @q OR notes LIKE @q
-           ORDER BY name COLLATE NOCASE`
-        )
-        .all({ q: `%${query}%` })
-    : db.prepare("SELECT * FROM clients ORDER BY name COLLATE NOCASE").all();
+  const clauses: string[] = [];
+  const params: Record<string, string> = {};
+  if (query) {
+    clauses.push("(name LIKE @q OR email LIKE @q OR phone LIKE @q OR company LIKE @q OR neighborhoods LIKE @q OR notes LIKE @q)");
+    params.q = `%${query}%`;
+  }
+  if (type === "client" || type === "broker") {
+    clauses.push("type = @type");
+    params.type = type;
+  }
+  const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
+  const rows = db.prepare(`SELECT * FROM clients ${where} ORDER BY name COLLATE NOCASE`).all(params);
   return (rows as Record<string, unknown>[]).map(mapClient);
 }
 
@@ -230,22 +303,10 @@ export function getClient(id: number): Client | null {
 export function createClient(input: ClientInput): Client {
   const result = getDb()
     .prepare(
-      `INSERT INTO clients (name, phone, email, budget_max, beds_min, baths_min, neighborhoods, pets, move_in_date, must_haves, notes)
-       VALUES (@name, @phone, @email, @budget_max, @beds_min, @baths_min, @neighborhoods, @pets, @move_in_date, @must_haves, @notes)`
+      `INSERT INTO clients (name, type, status, company, phone, email, budget_max, beds_min, baths_min, neighborhoods, pets, move_in_date, must_haves, notes)
+       VALUES (@name, @type, @status, @company, @phone, @email, @budget_max, @beds_min, @baths_min, @neighborhoods, @pets, @move_in_date, @must_haves, @notes)`
     )
-    .run({
-      name: input.name.trim(),
-      phone: input.phone ?? "",
-      email: input.email ?? "",
-      budget_max: parseOptionalNumber(input.budget_max),
-      beds_min: parseNumber(input.beds_min, 0),
-      baths_min: parseNumber(input.baths_min, 0),
-      neighborhoods: jsonList(input.neighborhoods),
-      pets: parseBool(input.pets) ? 1 : 0,
-      move_in_date: input.move_in_date ?? "",
-      must_haves: jsonList(input.must_haves),
-      notes: input.notes ?? "",
-    });
+    .run(clientWriteParams(input));
   return getClient(Number(result.lastInsertRowid))!;
 }
 
@@ -254,6 +315,9 @@ export function updateClient(id: number, input: ClientInput): Client | null {
     .prepare(
       `UPDATE clients SET
         name = @name,
+        type = @type,
+        status = @status,
+        company = @company,
         phone = @phone,
         email = @email,
         budget_max = @budget_max,
@@ -267,20 +331,7 @@ export function updateClient(id: number, input: ClientInput): Client | null {
         updated_at = datetime('now')
       WHERE id = @id`
     )
-    .run({
-      id,
-      name: input.name.trim(),
-      phone: input.phone ?? "",
-      email: input.email ?? "",
-      budget_max: parseOptionalNumber(input.budget_max),
-      beds_min: parseNumber(input.beds_min, 0),
-      baths_min: parseNumber(input.baths_min, 0),
-      neighborhoods: jsonList(input.neighborhoods),
-      pets: parseBool(input.pets) ? 1 : 0,
-      move_in_date: input.move_in_date ?? "",
-      must_haves: jsonList(input.must_haves),
-      notes: input.notes ?? "",
-    });
+    .run({ id, ...clientWriteParams(input) });
   return getClient(id);
 }
 
@@ -453,13 +504,20 @@ export function deleteMatch(id: number) {
   getDb().prepare("DELETE FROM matches WHERE id = ?").run(id);
 }
 
+export function listSources(): Source[] {
+  const rows = getDb().prepare("SELECT * FROM sources ORDER BY name COLLATE NOCASE").all();
+  return (rows as Record<string, unknown>[]).map(mapSource);
+}
+
 export function stats() {
   const db = getDb();
-  const clients = (db.prepare("SELECT COUNT(*) AS n FROM clients").get() as { n: number }).n;
+  const clients = (db.prepare("SELECT COUNT(*) AS n FROM clients WHERE type = 'client'").get() as { n: number }).n;
+  const brokers = (db.prepare("SELECT COUNT(*) AS n FROM clients WHERE type = 'broker'").get() as { n: number }).n;
+  const sources = (db.prepare("SELECT COUNT(*) AS n FROM sources").get() as { n: number }).n;
   const listings = (db.prepare("SELECT COUNT(*) AS n FROM listings").get() as { n: number }).n;
   const available = (
     db.prepare("SELECT COUNT(*) AS n FROM listings WHERE status = 'available'").get() as { n: number }
   ).n;
   const matches = (db.prepare("SELECT COUNT(*) AS n FROM matches").get() as { n: number }).n;
-  return { clients, listings, available, matches };
+  return { clients, brokers, sources, listings, available, matches };
 }

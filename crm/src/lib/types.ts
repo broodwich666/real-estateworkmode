@@ -1,6 +1,11 @@
+export type PersonType = "client" | "broker";
+
 export type Client = {
   id: number;
   name: string;
+  type: PersonType;
+  status: string;
+  company: string;
   phone: string;
   email: string;
   budget_max: number | null;
@@ -54,6 +59,9 @@ export type MatchResult = {
 
 export type ClientInput = {
   name: string;
+  type?: PersonType | string;
+  status?: string;
+  company?: string;
   phone?: string;
   email?: string;
   budget_max?: number | null;
@@ -64,6 +72,21 @@ export type ClientInput = {
   move_in_date?: string;
   must_haves?: string[] | string;
   notes?: string;
+};
+
+export type Source = {
+  id: number;
+  name: string;
+  kind: string;
+  status: string;
+  notes: string;
+};
+
+export type SourceInput = {
+  name: string;
+  kind: string;
+  status: string;
+  notes: string;
 };
 
 export type ListingInput = {

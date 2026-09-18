@@ -22,7 +22,7 @@ npm install && npm run dev
 
 Then open [http://localhost:3000](http://localhost:3000).
 
-The first launch creates `data/crm.db` (SQLite) and seeds sample clients and listings. To reset demo data:
+The first launch creates `data/crm.db` (SQLite) and seeds sample rental clients, listings, inventory sources, and 10 brokers. To reset demo data:
 
 ```bash
 npm run seed
@@ -30,18 +30,24 @@ npm run seed
 
 ## Demo flow
 
-1. Open **Clients** and pick **Maya Chen** (or add a new client).
-2. The client page runs **Find matches** against available listings: budget, beds, baths, neighborhoods, and pets are hard filters; must-haves affect ranking.
-3. Save a match with optional notes.
-4. On **Listings**, add a unit by hand or **Import CSV**. A sample file is at `data/sample-listings.csv`.
+1. Open **People** (or **Clients** filter) and pick **Maya Chen**, or **Brokers** and pick **David Schwartz**.
+2. Open **Sources** to see which feeds are ready vs blocked vs never-scrape.
+3. The client page runs **Find matches** against available listings: budget, beds, baths, neighborhoods, and pets are hard filters; must-haves affect ranking.
+4. Save a match with optional notes.
+5. On **Listings**, add a unit by hand or **Import CSV**. A sample file is at `data/sample-listings.csv`.
+
+PLUTO field map (no live pull): `docs/PLUTO-FIELD-MAP.md`.
 
 ## Data model
 
-- **clients**: name, phone, email, budget_max, beds_min, baths_min, neighborhoods, pets, move_in_date, must_haves, notes
+- **clients / people**: name, type (`client` or `broker`), status, company, phone, email, budget_max, beds_min, baths_min, neighborhoods, pets, move_in_date, must_haves, notes
 - **listings**: source, external_id, address, neighborhood, beds, baths, price, status, url, pets_allowed, amenities, notes, pulled_at
 - **matches**: client_id, listing_id, notes, created_at
+- **sources**: name, kind (`open` / `licensed` / `manual` / `blocked`), status (`ready` / `blocked` / `never`), notes
 
 CSV columns match the listing fields. Rows with the same `source` + `external_id` update the existing listing. `pets_allowed` accepts `yes` / `true` / `1`. Amenities can be comma-separated (quoted) or semicolon-separated.
+
+This CRM does not send outreach or email. Broker emails are stored for reference only.
 
 ## Scripts
 

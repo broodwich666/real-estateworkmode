@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start --hostname 0.0.0.0 --port 3000",
     "seed": "tsx scripts/seed.ts",
-    "test": "tsx --test src/lib/match.test.ts src/lib/csv.test.ts"
+    "test": "tsx --test src/lib/match.test.ts src/lib/csv.test.ts src/lib/seed.test.ts"
   },
   "dependencies": {
     "better-sqlite3": "^11.10.0",

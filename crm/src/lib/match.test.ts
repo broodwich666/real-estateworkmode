@@ -7,6 +7,9 @@ function client(overrides: Partial<Client> = {}): Client {
   return {
     id: 1,
     name: "Test Client",
+    type: "client",
+    status: "active",
+    company: "",
     phone: "",
     email: "",
     budget_max: 3400,

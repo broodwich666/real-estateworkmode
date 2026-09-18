@@ -35,3 +35,7 @@ export const MUST_HAVES = [
 export const LISTING_STATUSES = ["available", "pending", "rented", "off-market"] as const;
 
 export const LISTING_SOURCES = ["manual", "csv", "mls-grid"] as const;
+
+export const PERSON_TYPES = ["client", "broker"] as const;
+
+export const PERSON_STATUSES = ["active", "inactive"] as const;
