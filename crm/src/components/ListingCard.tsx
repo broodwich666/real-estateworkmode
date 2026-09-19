@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { formatBaths, formatBeds, formatMoney, titleCaseStatus } from "@/lib/format";
+import StatusPill from "@/components/StatusPill";
+import { formatBaths, formatBeds, formatMoney } from "@/lib/format";
 import type { Listing } from "@/lib/types";
 
 export default function ListingCard({
@@ -15,19 +16,21 @@ export default function ListingCard({
     <>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-clay">{listing.neighborhood || "NYC"}</p>
-          <h3 className="mt-1 font-display text-xl font-semibold leading-snug text-navy">{listing.address}</h3>
+          <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-muted">
+            {listing.neighborhood || "NYC"}
+          </p>
+          <h3 className="mt-1 text-[13px] font-medium leading-snug">{listing.address}</h3>
         </div>
-        <p className="shrink-0 font-display text-xl font-semibold text-navy">{formatMoney(listing.price)}</p>
+        <p className="shrink-0 text-[13px] font-semibold tabular-nums">{formatMoney(listing.price)}</p>
       </div>
-      <p className="mt-2 text-sm text-ink/70">
+      <p className="mt-2 text-xs text-muted">
         {formatBeds(listing.beds)} · {formatBaths(listing.baths)} · {listing.pets_allowed ? "Pets ok" : "No pets"}
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
-        <span className="chip">{titleCaseStatus(listing.status)}</span>
-        {listing.source ? <span className="chip">{listing.source}</span> : null}
+        <StatusPill status={listing.status} />
+        {listing.source ? <span className="pill">{listing.source}</span> : null}
         {listing.amenities.slice(0, 4).map((item) => (
-          <span key={item} className="chip">
+          <span key={item} className="pill">
             {item}
           </span>
         ))}

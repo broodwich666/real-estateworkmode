@@ -27,11 +27,11 @@ export default function PlutoEnrichButton({ listingId }: { listingId: number }) 
   return (
     <form action={onSubmit} className="space-y-2">
       <input type="hidden" name="id" value={listingId} />
-      <button className="btn-accent" disabled={pending} type="submit">
+      <button className="btn-primary" disabled={pending} type="submit">
         {pending ? "Enriching…" : "Enrich from PLUTO"}
       </button>
       {error ? (
-        <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
+        <p className="rounded-md border border-ink bg-white px-3 py-2 text-[13px] text-ink">{error}</p>
       ) : null}
     </form>
   );

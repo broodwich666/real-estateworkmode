@@ -2,9 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import ConfirmDelete from "@/components/ConfirmDelete";
 import PlutoEnrichButton from "@/components/PlutoEnrichButton";
+import StatusPill from "@/components/StatusPill";
 import { deleteListingAction } from "@/app/actions";
 import { getListing } from "@/lib/db";
-import { dash, formatBaths, formatBeds, formatDate, formatMoney, titleCaseStatus, trimNumber } from "@/lib/format";
+import { dash, formatBaths, formatBeds, formatDate, formatMoney, trimNumber } from "@/lib/format";
 
 export default async function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const listing = getListing(Number((await params).id));
@@ -17,13 +18,11 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
   return (
     <main className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="page-header">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-clay">
-            {[listing.neighborhood, listing.borough].filter(Boolean).join(" · ") || "NYC"}
-          </p>
-          <h2 className="font-display text-3xl text-navy">{listing.address}</h2>
-          <p className="mt-2 text-lg text-navy">
+          <p className="page-sub">{[listing.neighborhood, listing.borough].filter(Boolean).join(" · ") || "NYC"}</p>
+          <h1 className="page-title">{listing.address}</h1>
+          <p className="page-sub">
             {formatMoney(listing.price)} · {formatBeds(listing.beds)} · {formatBaths(listing.baths)}
           </p>
         </div>
@@ -34,16 +33,16 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
       <section className="card space-y-4 p-5">
         <div className="flex flex-wrap gap-2">
-          <span className="chip">{titleCaseStatus(listing.status)}</span>
-          <span className="chip">{listing.pets_allowed ? "Pets allowed" : "No pets"}</span>
-          <span className="chip">{listing.source || "manual"}</span>
-          {listing.external_id ? <span className="chip">ID {listing.external_id}</span> : null}
-          {listing.bbl ? <span className="chip">BBL {listing.bbl}</span> : null}
+          <StatusPill status={listing.status} />
+          <span className="pill">{listing.pets_allowed ? "Pets allowed" : "No pets"}</span>
+          <span className="pill">{listing.source || "manual"}</span>
+          {listing.external_id ? <span className="pill">ID {listing.external_id}</span> : null}
+          {listing.bbl ? <span className="pill">BBL {listing.bbl}</span> : null}
         </div>
         {listing.amenities.length ? (
           <div className="flex flex-wrap gap-2">
             {listing.amenities.map((item) => (
-              <span key={item} className="chip">
+              <span key={item} className="pill">
                 {item}
               </span>
             ))}
@@ -51,14 +50,14 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
         ) : null}
         <dl className="grid gap-3 sm:grid-cols-2">
           <div>
-            <dt className="text-xs font-bold uppercase tracking-wide text-ink/45">Pulled at</dt>
-            <dd>{formatDate(listing.pulled_at)}</dd>
+            <dt className="text-[11px] font-medium uppercase tracking-[0.06em] text-muted">Pulled at</dt>
+            <dd className="mt-1 text-[13px]">{formatDate(listing.pulled_at)}</dd>
           </div>
           <div>
-            <dt className="text-xs font-bold uppercase tracking-wide text-ink/45">URL</dt>
-            <dd>
+            <dt className="text-[11px] font-medium uppercase tracking-[0.06em] text-muted">URL</dt>
+            <dd className="mt-1 text-[13px]">
               {listing.url ? (
-                <a className="font-bold text-clay break-all" href={listing.url} target="_blank" rel="noreferrer">
+                <a className="break-all underline" href={listing.url} target="_blank" rel="noreferrer">
                   {listing.url}
                 </a>
               ) : (
@@ -67,57 +66,31 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             </dd>
           </div>
         </dl>
-        {listing.notes ? <p className="text-sm leading-6 text-ink/70">{listing.notes}</p> : null}
+        {listing.notes ? <p className="text-[13px] leading-6 text-muted">{listing.notes}</p> : null}
       </section>
 
       <section className="card space-y-4 p-5">
         <div>
-          <h3 className="font-display text-xl text-navy">PLUTO tax lot</h3>
-          <p className="mt-1 text-sm text-ink/65">
+          <h2 className="text-[13px] font-semibold">PLUTO tax lot</h2>
+          <p className="mt-1 text-[13px] text-muted">
             Official NYC Open Data (dataset 64uk-42ks), one lot. Fills lot columns only — never rent, beds, baths,
             status, URL, pets, or pulled date.
           </p>
         </div>
         <dl className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <dt className="text-xs font-bold uppercase tracking-wide text-ink/45">BBL</dt>
-            <dd>{dash(listing.bbl)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-bold uppercase tracking-wide text-ink/45">Borough</dt>
-            <dd>{dash(listing.borough)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-bold uppercase tracking-wide text-ink/45">Residential units</dt>
-            <dd>{dash(listing.units_res)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-bold uppercase tracking-wide text-ink/45">Year built</dt>
-            <dd>{dash(listing.year_built)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-bold uppercase tracking-wide text-ink/45">Floors</dt>
-            <dd>{dash(listing.num_floors)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-bold uppercase tracking-wide text-ink/45">Building class</dt>
-            <dd>{dash(listing.bldg_class)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-bold uppercase tracking-wide text-ink/45">Zoning</dt>
-            <dd>{dash(listing.zone_dist)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-bold uppercase tracking-wide text-ink/45">Owner</dt>
-            <dd>{dash(listing.owner_name)}</dd>
+          <Fact label="BBL" value={dash(listing.bbl)} />
+          <Fact label="Borough" value={dash(listing.borough)} />
+          <Fact label="Residential units" value={dash(listing.units_res)} />
+          <Fact label="Year built" value={dash(listing.year_built)} />
+          <Fact label="Floors" value={dash(listing.num_floors)} />
+          <Fact label="Building class" value={dash(listing.bldg_class)} />
+          <Fact label="Zoning" value={dash(listing.zone_dist)} />
+          <Fact label="Owner" value={dash(listing.owner_name)} />
+          <div className="sm:col-span-2">
+            <Fact label="Latitude / longitude" value={coords || "—"} />
           </div>
           <div className="sm:col-span-2">
-            <dt className="text-xs font-bold uppercase tracking-wide text-ink/45">Latitude / longitude</dt>
-            <dd>{coords || "—"}</dd>
-          </div>
-          <div className="sm:col-span-2">
-            <dt className="text-xs font-bold uppercase tracking-wide text-ink/45">Enriched at</dt>
-            <dd>{dash(listing.pluto_enriched_at)}</dd>
+            <Fact label="Enriched at" value={dash(listing.pluto_enriched_at)} />
           </div>
         </dl>
         <PlutoEnrichButton listingId={listing.id} />
@@ -130,5 +103,14 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
         message="Delete this listing and any saved matches?"
       />
     </main>
+  );
+}
+
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-[11px] font-medium uppercase tracking-[0.06em] text-muted">{label}</dt>
+      <dd className="mt-1 text-[13px]">{value}</dd>
+    </div>
   );
 }

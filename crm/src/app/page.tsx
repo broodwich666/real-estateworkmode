@@ -1,120 +1,121 @@
 import Link from "next/link";
-import { listSources, stats, listClients, listListings } from "@/lib/db";
+import PageHeader from "@/components/PageHeader";
+import StatusPill from "@/components/StatusPill";
+import { listClients, listListings, listSources, stats } from "@/lib/db";
 import { formatBeds, formatMoney } from "@/lib/format";
 
 export default function HomePage() {
   const counts = stats();
-  const clients = listClients("", "client").slice(0, 4);
-  const brokers = listClients("", "broker").slice(0, 4);
-  const listings = listListings("", "available").slice(0, 4);
+  const people = [...listClients("", "client").slice(0, 4), ...listClients("", "broker").slice(0, 1)];
+  const listings = listListings("", "available").slice(0, 3);
   const sources = listSources();
 
   return (
-    <main className="space-y-6">
-      <section className="card bg-navy p-5 text-white">
-        <p className="text-sm text-white/70">Agent workspace</p>
-        <h2 className="mt-1 font-display text-3xl">Find the apartment that fits.</h2>
-        <p className="mt-2 max-w-xl text-white/80">
-          Keep every client, broker, and listing in one database. Cross-search by budget, beds, baths, neighborhood, and
-          pets, then save the matches you want to send.
-        </p>
-        <div className="mt-5 flex flex-wrap gap-2">
-          <Link href="/clients/new" className="btn-accent">
-            Add person
-          </Link>
-          <Link href="/listings/new" className="btn bg-white text-navy">
-            Add listing
-          </Link>
-          <Link href="/listings/import" className="btn border border-white/30 text-white">
-            Import CSV
-          </Link>
-        </div>
-      </section>
+    <main>
+      <PageHeader title="Clients" sub="NYC rental clients, listings, and saved matches.">
+        <Link href="/listings/import" className="btn-ghost">
+          Import CSV
+        </Link>
+        <Link href="/clients/new" className="btn-primary">
+          New client
+        </Link>
+      </PageHeader>
 
-      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Clients" value={counts.clients} href="/clients?type=client" />
-        <Stat label="Brokers" value={counts.brokers} href="/clients?type=broker" />
+      <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Stat label="Active clients" value={counts.clients} href="/clients?type=client" />
         <Stat label="Listings" value={counts.listings} href="/listings" />
-        <Stat label="Sources" value={counts.sources} href="/sources" />
+        <Stat label="Saved matches" value={counts.matches} href="/matches" />
+        <Stat label="Brokers" value={counts.brokers} href="/clients?type=broker" />
       </section>
 
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-2xl text-navy">Clients</h2>
-          <Link href="/clients?type=client" className="text-sm font-bold text-clay">
+      <div className="grid gap-4 lg:grid-cols-[1.15fr_.85fr]">
+        <section className="card overflow-x-auto">
+          <div className="card-head">
+            People
+            <span className="pill">All · Clients · Brokers</span>
+          </div>
+          {people.length ? (
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Budget</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {people.map((person) => (
+                  <tr key={person.id}>
+                    <td>
+                      <Link href={`/clients/${person.id}`} className="font-medium">
+                        {person.name}
+                      </Link>
+                    </td>
+                    <td className="text-muted">{person.type === "broker" ? "Broker" : "Client"}</td>
+                    <td className="text-muted">
+                      {person.type === "broker" ? "—" : `≤ ${formatMoney(person.budget_max)}`}
+                    </td>
+                    <td>
+                      <StatusPill status={person.status} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="px-4 py-8 text-center text-sm text-muted">No people yet.</p>
+          )}
+        </section>
+
+        <section className="card overflow-hidden">
+          <div className="card-head">Available listings</div>
+          {listings.length ? (
+            <div>
+              {listings.map((listing) => (
+                <Link
+                  key={listing.id}
+                  href={`/listings/${listing.id}`}
+                  className="block border-b border-line px-4 py-3.5 last:border-b-0"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[13px] font-medium">
+                        {listing.neighborhood || "NYC"} · {formatMoney(listing.price)}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-muted">
+                        {formatBeds(listing.beds)}
+                        {listing.pets_allowed ? " · Pets ok" : ""}
+                        {listing.source ? ` · ${listing.source}` : ""}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-[13px] font-semibold tabular-nums">{formatBeds(listing.beds)}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="px-4 py-8 text-center text-sm text-muted">No available listings.</p>
+          )}
+        </section>
+      </div>
+
+      <section className="mt-4 card overflow-hidden">
+        <div className="card-head">
+          Sources
+          <Link href="/sources" className="text-[13px] font-medium text-muted">
             View all
           </Link>
         </div>
-        <div className="grid gap-3">
-          {clients.map((client) => (
-            <Link key={client.id} href={`/clients/${client.id}`} className="card flex items-center justify-between p-4">
-              <div>
-                <p className="font-semibold text-navy">{client.name}</p>
-                <p className="text-sm text-ink/60">
-                  {formatMoney(client.budget_max)} · {formatBeds(client.beds_min)}+ ·{" "}
-                  {client.neighborhoods.join(", ") || "Any neighborhood"}
-                </p>
-              </div>
-              <span className="text-navy">›</span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-2xl text-navy">Brokers</h2>
-          <Link href="/clients?type=broker" className="text-sm font-bold text-clay">
-            View all
-          </Link>
-        </div>
-        <div className="grid gap-3">
-          {brokers.map((broker) => (
-            <Link key={broker.id} href={`/clients/${broker.id}`} className="card flex items-center justify-between p-4">
-              <div>
-                <p className="font-semibold text-navy">{broker.name}</p>
-                <p className="text-sm text-ink/60">{[broker.company, broker.phone].filter(Boolean).join(" · ")}</p>
-              </div>
-              <span className="text-navy">›</span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-2xl text-navy">Inventory sources</h2>
-          <Link href="/sources" className="text-sm font-bold text-clay">
-            View all
-          </Link>
-        </div>
-        <div className="grid gap-2">
+        <div>
           {sources.map((source) => (
-            <Link key={source.id} href="/sources" className="card flex items-center justify-between p-3">
-              <span className="font-semibold text-navy">{source.name}</span>
-              <span className="chip">
-                {source.kind} · {source.status}
-              </span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-2xl text-navy">Available listings</h2>
-          <Link href="/listings" className="text-sm font-bold text-clay">
-            View all
-          </Link>
-        </div>
-        <div className="grid gap-3">
-          {listings.map((listing) => (
-            <Link key={listing.id} href={`/listings/${listing.id}`} className="card p-4">
-              <p className="text-xs font-bold uppercase tracking-wide text-clay">{listing.neighborhood}</p>
-              <p className="font-semibold text-navy">{listing.address}</p>
-              <p className="text-sm text-ink/60">
-                {formatMoney(listing.price)} · {formatBeds(listing.beds)}
-              </p>
+            <Link
+              key={source.id}
+              href="/sources"
+              className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 last:border-b-0"
+            >
+              <span className="text-[13px] font-medium">{source.name}</span>
+              <StatusPill status={source.status} />
             </Link>
           ))}
         </div>
@@ -125,9 +126,9 @@ export default function HomePage() {
 
 function Stat({ label, value, href }: { label: string; value: number; href: string }) {
   return (
-    <Link href={href} className="card p-4">
-      <p className="text-xs font-bold uppercase tracking-wide text-ink/50">{label}</p>
-      <p className="mt-1 font-display text-3xl text-navy">{value}</p>
+    <Link href={href} className="card px-[18px] py-4">
+      <p className="text-xs font-normal text-muted">{label}</p>
+      <p className="mt-1.5 text-[28px] font-semibold tracking-[-0.03em]">{value}</p>
     </Link>
   );
 }

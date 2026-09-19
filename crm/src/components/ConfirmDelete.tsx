@@ -26,7 +26,7 @@ export default function ConfirmDelete({
   return (
     <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="id" value={id} />
-      <p className="text-sm text-red-800">{message}</p>
+      <p className="text-[13px] text-muted">{message}</p>
       <button type="submit" className="btn-danger">
         Confirm delete
       </button>

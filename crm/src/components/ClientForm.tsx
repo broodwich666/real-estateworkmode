@@ -103,7 +103,7 @@ export default function ClientForm({
             step="0.5"
             defaultValue={client?.beds_min ?? 1}
           />
-          <p className="mt-1 text-xs text-ink/50">Use 0 for studio.</p>
+          <p className="mt-1 text-xs text-muted">Use 0 for studio.</p>
         </div>
         <div>
           <label className="label" htmlFor="baths_min">
@@ -128,11 +128,11 @@ export default function ClientForm({
           </label>
           <input id="move_in_date" name="move_in_date" type="date" className="field" defaultValue={client?.move_in_date} />
         </div>
-        <label className="flex items-end gap-3 rounded-xl border border-line bg-paper px-3 py-3">
-          <input type="checkbox" name="pets" value="true" defaultChecked={client?.pets} className="h-5 w-5" />
+        <label className="flex items-end gap-3 rounded-md border border-line bg-white px-3 py-3">
+          <input type="checkbox" name="pets" value="true" defaultChecked={client?.pets} className="h-4 w-4" />
           <span>
-            <span className="block font-semibold text-navy">Needs pet-friendly</span>
-            <span className="text-sm text-ink/60">Only show listings that allow pets</span>
+            <span className="block text-[13px] font-medium">Needs pet-friendly</span>
+            <span className="text-xs text-muted">Only show listings that allow pets</span>
           </span>
         </label>
       </div>
@@ -141,7 +141,7 @@ export default function ClientForm({
         <legend className="label">Neighborhoods</legend>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {NEIGHBORHOODS.map((name) => (
-            <label key={name} className="flex min-h-11 items-center gap-2 rounded-xl bg-paper px-3 text-sm">
+            <label key={name} className="flex min-h-10 items-center gap-2 rounded-md border border-line bg-white px-3 text-[13px]">
               <input
                 type="checkbox"
                 name="neighborhoods"
@@ -158,7 +158,7 @@ export default function ClientForm({
         <legend className="label">Must-haves</legend>
         <div className="grid grid-cols-2 gap-2">
           {MUST_HAVES.map((name) => (
-            <label key={name} className="flex min-h-11 items-center gap-2 rounded-xl bg-paper px-3 text-sm">
+            <label key={name} className="flex min-h-10 items-center gap-2 rounded-md border border-line bg-white px-3 text-[13px]">
               <input
                 type="checkbox"
                 name="must_haves"

@@ -90,7 +90,7 @@ export default function ListingForm({
             defaultValue={listing?.bbl}
             placeholder="1012437505"
           />
-          <p className="mt-1 text-xs text-ink/55">
+          <p className="mt-1 text-xs text-muted">
             10-digit tax lot. If present, save auto-enriches from PLUTO. Lot fields stay off this form.
           </p>
         </div>
@@ -186,16 +186,16 @@ export default function ListingForm({
         </div>
       </div>
 
-      <label className="flex items-center gap-3 rounded-xl border border-line bg-paper px-3 py-3">
-        <input type="checkbox" name="pets_allowed" value="true" defaultChecked={listing?.pets_allowed} className="h-5 w-5" />
-        <span className="font-semibold text-navy">Pets allowed</span>
+      <label className="flex items-center gap-3 rounded-md border border-line bg-white px-3 py-3">
+        <input type="checkbox" name="pets_allowed" value="true" defaultChecked={listing?.pets_allowed} className="h-4 w-4" />
+        <span className="text-[13px] font-medium">Pets allowed</span>
       </label>
 
       <fieldset>
         <legend className="label">Amenities</legend>
         <div className="grid grid-cols-2 gap-2">
           {MUST_HAVES.map((name) => (
-            <label key={name} className="flex min-h-11 items-center gap-2 rounded-xl bg-paper px-3 text-sm">
+            <label key={name} className="flex min-h-10 items-center gap-2 rounded-md border border-line bg-white px-3 text-[13px]">
               <input type="checkbox" name="amenities" value={name} defaultChecked={selectedAmenities.has(name)} />
               {name}
             </label>

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import ListingForm from "@/components/ListingForm";
+import PageHeader from "@/components/PageHeader";
 import { updateListingAction } from "@/app/actions";
 import { getListing } from "@/lib/db";
 
@@ -8,8 +9,8 @@ export default async function EditListingPage({ params }: { params: Promise<{ id
   if (!listing) notFound();
 
   return (
-    <main className="space-y-4">
-      <h2 className="font-display text-2xl text-navy">Edit listing</h2>
+    <main>
+      <PageHeader title="Edit listing" />
       <ListingForm listing={listing} action={updateListingAction} submitLabel="Update listing" />
     </main>
   );

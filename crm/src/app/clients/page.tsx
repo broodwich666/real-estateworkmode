@@ -1,5 +1,7 @@
 import Link from "next/link";
+import PageHeader from "@/components/PageHeader";
 import SearchBox from "@/components/SearchBox";
+import StatusPill from "@/components/StatusPill";
 import { listClients } from "@/lib/db";
 import { formatBeds, formatDate, formatMoney } from "@/lib/format";
 
@@ -16,15 +18,15 @@ export default async function ClientsPage({
 }) {
   const { q = "", type = "" } = await searchParams;
   const people = listClients(q, type);
+  const title = type === "broker" ? "Brokers" : type === "client" ? "Clients" : "People";
 
   return (
-    <main className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="font-display text-2xl text-navy">People</h2>
+    <main>
+      <PageHeader title={title} sub="Clients and brokers in the local database.">
         <Link href="/clients/new" className="btn-primary">
-          Add person
+          New client
         </Link>
-      </div>
+      </PageHeader>
       <SearchBox
         action="/clients"
         placeholder="Search name, company, notes…"
@@ -39,7 +41,7 @@ export default async function ClientsPage({
           </select>
         }
       />
-      <div className="flex flex-wrap gap-2">
+      <div className="mb-4 mt-4 flex flex-wrap gap-2">
         {FILTERS.map((filter) => {
           const href = filter.value ? `/clients?type=${filter.value}` : "/clients";
           const active = type === filter.value;
@@ -51,46 +53,54 @@ export default async function ClientsPage({
         })}
       </div>
       {people.length ? (
-        <div className="grid gap-3">
-          {people.map((person) => (
-            <Link key={person.id} href={`/clients/${person.id}`} className="card p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h3 className="font-display text-xl text-navy">{person.name}</h3>
-                  {person.type === "broker" ? (
-                    <p className="mt-1 text-sm text-ink/65">
-                      {[person.company, person.phone].filter(Boolean).join(" · ") || "Broker"}
-                    </p>
-                  ) : (
-                    <p className="mt-1 text-sm text-ink/65">
-                      {formatMoney(person.budget_max)} max · {formatBeds(person.beds_min)}+ · {person.baths_min}+ bath
-                    </p>
-                  )}
-                </div>
-                <span className="text-navy">›</span>
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <span className="chip">{person.type}</span>
-                <span className="chip">{person.status}</span>
-                {person.type === "broker" ? (
-                  person.email ? <span className="chip">{person.email}</span> : <span className="chip">No email</span>
-                ) : (
-                  <>
-                    {(person.neighborhoods.length ? person.neighborhoods : ["Any neighborhood"]).map((item) => (
-                      <span key={item} className="chip">
-                        {item}
-                      </span>
-                    ))}
-                    {person.pets ? <span className="chip">Pets</span> : null}
-                    {person.move_in_date ? <span className="chip">Move-in {formatDate(person.move_in_date)}</span> : null}
-                  </>
-                )}
-              </div>
-            </Link>
-          ))}
+        <div className="card overflow-x-auto">
+          <div className="card-head">
+            People
+            <span className="pill">All · Clients · Brokers</span>
+          </div>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Budget</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {people.map((person) => (
+                <tr key={person.id}>
+                  <td>
+                    <Link href={`/clients/${person.id}`} className="font-medium">
+                      {person.name}
+                    </Link>
+                    {person.type === "broker" ? (
+                      <p className="mt-1 text-xs text-muted">
+                        {[person.company, person.phone].filter(Boolean).join(" · ") || "Broker"}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-xs text-muted">
+                        {formatBeds(person.beds_min)}+
+                        {person.neighborhoods.length ? ` · ${person.neighborhoods.join(", ")}` : ""}
+                        {person.pets ? " · Pets" : ""}
+                        {person.move_in_date ? ` · Move-in ${formatDate(person.move_in_date)}` : ""}
+                      </p>
+                    )}
+                  </td>
+                  <td className="text-muted">{person.type === "broker" ? "Broker" : "Client"}</td>
+                  <td className="text-muted">
+                    {person.type === "broker" ? "—" : `≤ ${formatMoney(person.budget_max)}`}
+                  </td>
+                  <td>
+                    <StatusPill status={person.status} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : (
-        <div className="card p-8 text-center text-ink/60">No people found.</div>
+        <div className="card p-8 text-center text-sm text-muted">No people found.</div>
       )}
     </main>
   );
