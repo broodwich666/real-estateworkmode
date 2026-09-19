@@ -1,0 +1,15 @@
+node_modules
+.next
+out
+crm/data/*.db
+crm/data/*.db-wal
+crm/data/*.db-shm
+data/*.db
+data/*.db-wal
+data/*.db-shm
+.env
+.env.local
+.env*.local
+*.log
+.DS_Store
+tsconfig.tsbuildinfo
