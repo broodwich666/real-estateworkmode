@@ -136,25 +136,35 @@ input[type="checkbox"] {
   @apply border-ink bg-white text-ink;
 }
 
-.btn {
-  @apply inline-flex min-h-9 items-center justify-center rounded-md border border-line bg-white px-3.5 py-2 text-[13px] font-medium text-ink transition;
+.btn,
+.btn-primary,
+.btn-accent,
+.btn-ghost,
+.btn-danger {
+  @apply inline-flex min-h-9 items-center justify-center rounded-md border px-3.5 py-2 text-[13px] font-medium transition;
 }
 
-.btn:disabled {
+.btn:disabled,
+.btn-primary:disabled,
+.btn-accent:disabled,
+.btn-ghost:disabled,
+.btn-danger:disabled {
   @apply cursor-not-allowed opacity-50;
+}
+
+.btn,
+.btn-ghost,
+.btn-danger {
+  @apply border-line bg-white text-ink hover:bg-paper;
+}
+
+.btn-danger {
+  @apply border-ink;
 }
 
 .btn-primary,
 .btn-accent {
-  @apply btn border-ink bg-ink text-white hover:bg-black;
-}
-
-.btn-ghost {
-  @apply btn hover:bg-paper;
-}
-
-.btn-danger {
-  @apply btn border-ink bg-white text-ink hover:bg-paper;
+  @apply border-ink bg-ink text-white hover:bg-black;
 }
 
 .data-table {
